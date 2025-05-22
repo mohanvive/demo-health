@@ -104,6 +104,10 @@ dependencies = [
 	{org = "ballerina", name = "time"},
 	{org = "ballerina", name = "url"}
 ]
+modules = [
+	{org = "ballerina", packageName = "http", moduleName = "http"},
+	{org = "ballerina", packageName = "http", moduleName = "http.httpscerr"}
+]
 
 [[package]]
 org = "ballerina"
@@ -220,6 +224,9 @@ dependencies = [
 	{org = "ballerina", name = "jballerina.java"},
 	{org = "ballerina", name = "lang.value"},
 	{org = "ballerina", name = "observe"}
+]
+modules = [
+	{org = "ballerina", packageName = "log", moduleName = "log"}
 ]
 
 [[package]]
@@ -383,10 +390,71 @@ dependencies = [
 
 [[package]]
 org = "ballerinax"
+name = "health.base"
+version = "1.1.0"
+dependencies = [
+	{org = "ballerina", name = "http"},
+	{org = "ballerina", name = "io"},
+	{org = "ballerina", name = "jwt"},
+	{org = "ballerina", name = "log"},
+	{org = "ballerina", name = "mime"},
+	{org = "ballerina", name = "time"},
+	{org = "ballerina", name = "uuid"}
+]
+
+[[package]]
+org = "ballerinax"
 name = "health.ccda.r3"
 version = "0.9.0"
 dependencies = [
 	{org = "ballerina", name = "data.xmldata"}
+]
+
+[[package]]
+org = "ballerinax"
+name = "health.fhir.r4"
+version = "6.0.0"
+dependencies = [
+	{org = "ballerina", name = "constraint"},
+	{org = "ballerina", name = "http"},
+	{org = "ballerina", name = "io"},
+	{org = "ballerina", name = "jwt"},
+	{org = "ballerina", name = "lang.regexp"},
+	{org = "ballerina", name = "lang.value"},
+	{org = "ballerina", name = "log"},
+	{org = "ballerina", name = "time"},
+	{org = "ballerina", name = "url"},
+	{org = "ballerina", name = "uuid"},
+	{org = "ballerinax", name = "health.base"}
+]
+modules = [
+	{org = "ballerinax", packageName = "health.fhir.r4", moduleName = "health.fhir.r4"}
+]
+
+[[package]]
+org = "ballerinax"
+name = "health.fhir.r4.uscore501"
+version = "2.0.0"
+dependencies = [
+	{org = "ballerina", name = "constraint"},
+	{org = "ballerina", name = "log"},
+	{org = "ballerinax", name = "health.fhir.r4"}
+]
+
+[[package]]
+org = "ballerinax"
+name = "health.fhir.r4utils.ccdatofhir"
+version = "3.0.1"
+dependencies = [
+	{org = "ballerina", name = "io"},
+	{org = "ballerina", name = "log"},
+	{org = "ballerina", name = "time"},
+	{org = "ballerina", name = "uuid"},
+	{org = "ballerinax", name = "health.fhir.r4"},
+	{org = "ballerinax", name = "health.fhir.r4.uscore501"}
+]
+modules = [
+	{org = "ballerinax", packageName = "health.fhir.r4utils.ccdatofhir", moduleName = "health.fhir.r4utils.ccdatofhir"}
 ]
 
 [[package]]
@@ -407,9 +475,13 @@ org = "sameerag"
 name = "clinical_note_summarizer_demo"
 version = "0.1.0"
 dependencies = [
+	{org = "ballerina", name = "http"},
 	{org = "ballerina", name = "io"},
+	{org = "ballerina", name = "log"},
 	{org = "ballerina", name = "uuid"},
 	{org = "ballerinax", name = "ai"},
+	{org = "ballerinax", name = "health.fhir.r4"},
+	{org = "ballerinax", name = "health.fhir.r4utils.ccdatofhir"},
 	{org = "wso2healthcare", name = "health.ccdatojson"}
 ]
 modules = [

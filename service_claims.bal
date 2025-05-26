@@ -1,5 +1,4 @@
 import ballerina/http;
-import ballerina/io;
 import ballerina/log;
 import ballerinax/health.fhir.r4 as r4;
 import ballerinax/health.fhir.r4.uscore501;
@@ -27,8 +26,7 @@ service / on new http:Listener(9090) {
         if fromString is xml {
             r4:Bundle|r4:FHIRError convertedBundle = ccdatofhir:ccdaToFhir(fromString);
             if convertedBundle is r4:Bundle {
-                io:println("CCDA to FHIR conversion successful");
-                io:println(convertedBundle);
+                log:printInfo("CCDA to FHIR conversion successful", convertedBundle = convertedBundle);
                 return convertedBundle;
             }
         }
@@ -60,11 +58,11 @@ service / on new http:Listener(9090) {
         if fromString is xml {
             r4:Bundle|r4:FHIRError convertedBundle = ccdatofhir:ccdaToFhir(fromString);
             if convertedBundle is r4:Bundle {
-                io:println("CCDA to FHIR conversion successful");
+                log:printInfo("CCDA to FHIR conversion successful");
                 r4:BundleEntry[] entries = convertedBundle.entry ?: [];
                 anydata patient = entries.forEach(function (r4:BundleEntry entry) {
                     if entry?.'resource is uscore501:USCorePatientProfile {
-                        io:println("Converted Patient Resource: ", entry?.'resource);
+                        log:printInfo("Converted Patient Resource: ", entry = entry?.'resource.toJson());
                         return <()>entry?.'resource;
                     }
                 });
@@ -82,14 +80,13 @@ service / on new http:Listener(9090) {
     resource function get claims/summary() returns string|error {
         string fileContent = check alfrescoClient->/ccda.get();
 
-        // Print results
-        io:println("Content read from file: ", fileContent);
+        log:printInfo(string `Content read from file: ${fileContent}`);
         ccdatojson:CCDSummary[] ccdSummaries = check ccdatojson:getCCDSummaries([fileContent]);
         foreach ccdatojson:CCDSummary summary in ccdSummaries {
-            io:println("CCDSummary: ", summary);
+            log:printInfo(string `CCDSummary: ${summary.toJsonString()}`);
         }
         string agentResponse = check deduplicateAgent->run(query = ccdSummaries.toJsonString(), sessionId = uuid:createType4AsString());
-        io:println("Agent Response: ", agentResponse);
+        log:printInfo(string `Agent Response: " ${agentResponse}`);
         return agentResponse;
     }
 }

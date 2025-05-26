@@ -60,16 +60,12 @@ service / on new http:Listener(9090) {
             if convertedBundle is r4:Bundle {
                 log:printInfo("CCDA to FHIR conversion successful");
                 r4:BundleEntry[] entries = convertedBundle.entry ?: [];
-                anydata patient = entries.forEach(function (r4:BundleEntry entry) {
+                foreach r4:BundleEntry entry in entries {
+                    log:printInfo("Processing Bundle Entry: ", entry = entry.toJson());
                     if entry?.'resource is uscore501:USCorePatientProfile {
                         log:printInfo("Converted Patient Resource: ", entry = entry?.'resource.toJson());
-                        return <()>entry?.'resource;
+                        return <uscore501:USCorePatientProfile >entry?.'resource;
                     }
-                });
-                if patient is uscore501:USCorePatientProfile {
-                    return patient;
-                } else {
-                    return error("Patient resource not found in the converted bundle");
                 }
             }
         }

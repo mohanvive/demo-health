@@ -7,9 +7,14 @@ import ballerinax/health.fhir.r4utils.ccdatofhir as ccdatofhir;
 import wso2healthcare/health.ccdatojson;
 import ballerina/uuid;
 
+final http:Client alfrescoClient = check new (url = alfrescoApiUrl);
+
 service / on new http:Listener(9090) {
-    resource function get r4/Patient/\$summary() returns r4:Bundle|error {
-        string fileContent = check io:fileReadString("resources/CCDA_1_666a16fdd0295b55733596fd.xml");
+    resource function get r4/Patient/[string id]/\$summary() returns r4:Bundle|error {
+        map<string|string[]> queryParams = {
+            "id": id
+        };
+        string fileContent = check alfrescoClient->/ccda.get(queryParams);
         if fileContent.startsWith("<?xml version=\"1.0\" encoding=\"UTF-8\"?>") {
             int? indexOf = fileContent.indexOf("?>");
             if indexOf is int {
@@ -32,12 +37,17 @@ service / on new http:Listener(9090) {
     }
 
     resource function get r4/Patient(string? _id) returns uscore501:USCorePatientProfile|error {
+        string fileContent;
         if _id is string {
-            //call alfresco api to get documents by patient id
+            map<string|string[]> queryParams = {
+                "id": _id
+            };
+            fileContent = check alfrescoClient->/ccda.get(queryParams);
         } else {
             log:printInfo("Fetching Patient without specific ID");
+            fileContent = check alfrescoClient->/ccda.get();
         }
-        string fileContent = check io:fileReadString("resources/CCDA_1_666a16fdd0295b55733596fd.xml");
+
         if fileContent.startsWith("<?xml version=\"1.0\" encoding=\"UTF-8\"?>") {
             int? indexOf = fileContent.indexOf("?>");
             if indexOf is int {
@@ -70,7 +80,7 @@ service / on new http:Listener(9090) {
     }
 
     resource function get claims/summary() returns string|error {
-        string fileContent = check io:fileReadString("resources/CCDA_1_666a16fdd0295b55733596fd.xml");
+        string fileContent = check alfrescoClient->/ccda.get();
 
         // Print results
         io:println("Content read from file: ", fileContent);

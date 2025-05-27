@@ -9,7 +9,7 @@ import ballerina/uuid;
 final http:Client alfrescoClient = check new (url = alfrescoApiUrl);
 
 service / on new http:Listener(9090) {
-    resource function get r4/Patient/[string id]/\$summary() returns r4:Bundle|error {
+    resource function get r4/Patient/[string id]/\$summary() returns json|error {
         map<string|string[]> queryParams = {
             "id": id
         };
@@ -27,14 +27,14 @@ service / on new http:Listener(9090) {
             r4:Bundle|r4:FHIRError convertedBundle = ccdatofhir:ccdaToFhir(fromString);
             if convertedBundle is r4:Bundle {
                 log:printInfo("CCDA to FHIR conversion successful", convertedBundle = convertedBundle);
-                return convertedBundle;
+                return convertedBundle.toJson();
             }
         }
 
         return error("CCDA to FHIR conversion failed");
     }
 
-    resource function get r4/Patient(string? _id) returns uscore501:USCorePatientProfile|error {
+    resource function get r4/Patient(string? _id) returns json|error {
         string fileContent;
         if _id is string {
             map<string|string[]> queryParams = {
@@ -64,7 +64,7 @@ service / on new http:Listener(9090) {
                     log:printInfo("Processing Bundle Entry: ", entry = entry.toJson());
                     if entry?.'resource is uscore501:USCorePatientProfile {
                         log:printInfo("Converted Patient Resource: ", entry = entry?.'resource.toJson());
-                        return <uscore501:USCorePatientProfile >entry?.'resource;
+                        return (<uscore501:USCorePatientProfile>entry?.'resource).toJson();
                     }
                 }
             }

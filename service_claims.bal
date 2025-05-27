@@ -9,7 +9,7 @@ import ballerina/uuid;
 final http:Client alfrescoClient = check new (url = alfrescoApiUrl);
 
 service / on new http:Listener(9090) {
-    resource function get r4/Patient/[string id]/\$summary() returns json|error {
+    resource function get r4/Patient/[string id]/summary() returns json|error {
         map<string|string[]> queryParams = {
             "id": id
         };

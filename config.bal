@@ -3,3 +3,5 @@ configurable string openAiApiVersion = ?;
 configurable string openAiDeploymentId = ?;
 configurable string openAiServiceUrl = ?;
 configurable string alfrescoApiUrl = ?;
+
+configurable map<string[]> patientIdsToNodeIds = ?;

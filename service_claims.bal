@@ -1,19 +1,37 @@
 import ballerina/http;
 import ballerina/log;
+// import ballerina/test;
+import ballerina/uuid;
 import ballerinax/health.fhir.r4 as r4;
 import ballerinax/health.fhir.r4.uscore501;
 import ballerinax/health.fhir.r4utils.ccdatofhir as ccdatofhir;
+
 import wso2healthcare/health.ccdatojson;
-import ballerina/uuid;
 
 final http:Client alfrescoClient = check new (url = alfrescoApiUrl);
 
 service / on new http:Listener(9090) {
+
+    // Get patient summary
     resource function get r4/Patient/[string id]/summary() returns json|error {
-        map<string|string[]> queryParams = {
-            "id": id
+        if !patientIdsToNodeIds.hasKey(id) {
+            return error("Patient ID not found in the mapping");
+        }
+        string[]? nodeIds = patientIdsToNodeIds.get(id);
+        if nodeIds is () {
+            return error("Patient ID not found in the mapping");
+        }
+        string nodeId = (<string[]>nodeIds)[0];
+        // map<string|string[]> queryParams = {
+        //     "nodeId": nodeId
+        // };
+        map<string|string[]> headers = {
+            "Test-Key": testKey,
+            "Accept": "text/plain"
         };
-        string fileContent = check alfrescoClient->/ccda.get(queryParams);
+        string fileContent = check alfrescoClient->/download.get(headers = headers, params = {
+            "nodeId": nodeId
+        });
         if fileContent.startsWith("<?xml version=\"1.0\" encoding=\"UTF-8\"?>") {
             int? indexOf = fileContent.indexOf("?>");
             if indexOf is int {
@@ -34,17 +52,21 @@ service / on new http:Listener(9090) {
         return error("CCDA to FHIR conversion failed");
     }
 
-    resource function get r4/Patient(string? _id) returns json|error {
+    // Read the patient resource by ID
+    resource function get r4/Patient/[string id]() returns json|error {
         string fileContent;
-        if _id is string {
-            map<string|string[]> queryParams = {
-                "id": _id
-            };
-            fileContent = check alfrescoClient->/ccda.get(queryParams);
-        } else {
-            log:printInfo("Fetching Patient without specific ID");
-            fileContent = check alfrescoClient->/ccda.get();
+        map<string|string[]> headers = {
+            "Test-Key": testKey,
+            "Accept": "text/plain"
+        };
+        string[] nodeIds = patientIdsToNodeIds[id] ?: [];
+        if nodeIds.length() == 0 {
+            return error("Patient ID not found in the mapping");
         }
+
+        fileContent = check alfrescoClient->/download.get(headers = headers, params = {
+            "nodeId": nodeIds[0]
+        });
 
         if fileContent.startsWith("<?xml version=\"1.0\" encoding=\"UTF-8\"?>") {
             int? indexOf = fileContent.indexOf("?>");
@@ -73,15 +95,85 @@ service / on new http:Listener(9090) {
         return error("CCDA to FHIR conversion failed");
     }
 
-    resource function get claims/summary() returns string|error {
-        string fileContent = check alfrescoClient->/ccda.get();
+    resource function get r4/Patient(string? _id) returns json|error {
+        string fileContent;
+        map<string|string[]> headers = {
+            "Test-Key": testKey,
+            "Accept": "text/plain"
+        };
+        if _id is string {
+            string[] nodeIds = patientIdsToNodeIds[_id] ?: [];
+            if nodeIds.length() == 0 {
+                return error("Patient ID not found in the mapping");
+            }
+
+            fileContent = check alfrescoClient->/download.get(headers = headers, params = {
+                "nodeId": nodeIds[0]
+            });
+        } else {
+            log:printInfo("Fetching Patient without specific ID");
+            //iterate nodeIds and fetch the first one
+            string[] keys = patientIdsToNodeIds.keys().first();
+            if keys.length() == 0 {
+                return error("No Patient IDs found in the mapping");
+            }
+            string[] nodeIds = patientIdsToNodeIds[keys[0]] ?: [];
+            if nodeIds.length() == 0 {
+                return error("No Node IDs found for the first Patient ID");
+            }
+            fileContent = check alfrescoClient->/download.get(headers = headers, params = {
+                "nodeId": nodeIds[0]
+            });
+        }
+
+        if fileContent.startsWith("<?xml version=\"1.0\" encoding=\"UTF-8\"?>") {
+            int? indexOf = fileContent.indexOf("?>");
+            if indexOf is int {
+                fileContent = fileContent.substring(indexOf + 2);
+            } else {
+                log:printError("Error: XML declaration not found.");
+            }
+        }
+        xml|error fromString = xml:fromString(fileContent);
+        if fromString is xml {
+            r4:Bundle|r4:FHIRError convertedBundle = ccdatofhir:ccdaToFhir(fromString);
+            if convertedBundle is r4:Bundle {
+                return convertedBundle.toJson();
+            }
+        }
+
+        return error("CCDA to FHIR conversion failed");
+    }
+}
+
+service / on new http:Listener(8090) {
+
+    resource function get claims/summary(string id) returns string|error {
+        if !patientIdsToNodeIds.hasKey(id) {
+            return error("Patient ID not found in the mapping");
+        }
+        string[]? nodeIds = patientIdsToNodeIds.get(id);
+        if nodeIds is () {
+            return error("Patient ID not found in the mapping");
+        }
+        string nodeId = (<string[]>nodeIds)[0];
+        log:printInfo(string `Fetching claims summary for Patient ID: ${id} with Node ID: ${nodeId}`);
+        map<string|string[]> headers = {
+            "Test-Key": testKey,
+            "Accept": "text/plain"
+        };
+        // Fetch the file content from Alfresco using the nodeId
+        log:printInfo(string `Fetching file content for Node ID: ${nodeId}`);
+        string fileContent = check alfrescoClient->/download.get(headers = headers, params = {
+            "nodeId": nodeId
+        });
 
         log:printInfo(string `Content read from file: ${fileContent}`);
         ccdatojson:CCDSummary[] ccdSummaries = check ccdatojson:getCCDSummaries([fileContent]);
         foreach ccdatojson:CCDSummary summary in ccdSummaries {
             log:printInfo(string `CCDSummary: ${summary.toJsonString()}`);
         }
-        string agentResponse = check deduplicateAgent->run(query = ccdSummaries.toJsonString(), sessionId = uuid:createType4AsString());
+        string agentResponse = check deduplicateAgent->run(ccdSummaries.toJsonString(), uuid:createType4AsString());
         log:printInfo(string `Agent Response: " ${agentResponse}`);
         return agentResponse;
     }

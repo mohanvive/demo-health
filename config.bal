@@ -5,3 +5,4 @@ configurable string openAiServiceUrl = ?;
 configurable string alfrescoApiUrl = ?;
 
 configurable map<string[]> patientIdsToNodeIds = ?;
+configurable string testKey = ?;

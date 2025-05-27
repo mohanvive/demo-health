@@ -21,12 +21,10 @@ final ai:Agent deduplicateAgent = check new (
     systemPrompt = {
         role: "CCDA document Summarization Assistant",
         instructions: string `
-        You are expert in analyzing CCDA summaries. You will receive an array of JSON objects representing summarized CCDA in json format.
+You are expert in analyzing CCDA summaries. You will receive an array of JSON objects representing summarized CCDA in json format.
 
-        **Your task**: Summarize this operative note for health insurance claim processing with focus on procedure performed, diagnoses, and surgeon details.
-        - Provide the summary of the key details in plain text.`
-    },
-    memory = new ai:MessageWindowChatMemory(10), 
-    model = _deduplicateAgentModel, 
-    tools = []
+**Your task**: Summarize this operative note for health insurance claim processing with focus on patient details, procedure performed, diagnoses, and surgeon details.
+- Add a topic stating that claim document summary for <patient_id> <patient_name>
+- Provide the summary of the key details in plain text. `
+    }, memory = new ai:MessageWindowChatMemory(10), model = _deduplicateAgentModel, tools = []
 );

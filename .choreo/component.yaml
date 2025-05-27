@@ -1,4 +1,25 @@
 schemaVersion: 1.1
+endpoints:
+  - name: claim-processing-api
+    displayName: Claim Processing API
+    service:
+      basePath: /
+      port: 9090
+    type: REST
+    networkVisibilities:
+      - Project
+      - Public
+    schemaFilePath: oas/service_claims_openapi.yaml
+  - name: claim-summary-api
+    displayName: Claim Summary API
+    service:
+      basePath: /
+      port: 8090
+    type: REST
+    networkVisibilities:
+      - Project
+      - Public
+    schemaFilePath: oas/claim_summary_openapi.yaml    
 dependencies:
     connectionReferences:
     - name: DocumentAPIConn

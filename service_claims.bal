@@ -1,6 +1,5 @@
 import ballerina/http;
 import ballerina/log;
-// import ballerina/test;
 import ballerina/uuid;
 import ballerinax/health.fhir.r4 as r4;
 import ballerinax/health.fhir.r4.uscore501;
@@ -8,7 +7,13 @@ import ballerinax/health.fhir.r4utils.ccdatofhir as ccdatofhir;
 
 import wso2healthcare/health.ccdatojson;
 
-final http:Client alfrescoClient = check new (url = alfrescoApiUrl);
+final http:Client alfrescoClient = check new (alfrescoApiUrl,
+    auth = (tokenurl == "" || consumerkey == "" || consumersecret == "") ? () : {
+            tokenUrl: tokenurl,
+            clientId: consumerkey,
+            clientSecret: consumersecret
+        }
+);
 
 service / on new http:Listener(9090) {
 
@@ -22,11 +27,7 @@ service / on new http:Listener(9090) {
             return error("Patient ID not found in the mapping");
         }
         string nodeId = (<string[]>nodeIds)[0];
-        // map<string|string[]> queryParams = {
-        //     "nodeId": nodeId
-        // };
         map<string|string[]> headers = {
-            "Test-Key": testKey,
             "Accept": "text/plain"
         };
         string fileContent = check alfrescoClient->/download.get(headers = headers, params = {
@@ -56,7 +57,6 @@ service / on new http:Listener(9090) {
     resource function get r4/Patient/[string id]() returns json|error {
         string fileContent;
         map<string|string[]> headers = {
-            "Test-Key": testKey,
             "Accept": "text/plain"
         };
         string[] nodeIds = patientIdsToNodeIds[id] ?: [];
@@ -98,7 +98,6 @@ service / on new http:Listener(9090) {
     resource function get r4/Patient(string? _id) returns json|error {
         string fileContent;
         map<string|string[]> headers = {
-            "Test-Key": testKey,
             "Accept": "text/plain"
         };
         if _id is string {
@@ -159,7 +158,6 @@ service / on new http:Listener(8090) {
         string nodeId = (<string[]>nodeIds)[0];
         log:printInfo(string `Fetching claims summary for Patient ID: ${id} with Node ID: ${nodeId}`);
         map<string|string[]> headers = {
-            "Test-Key": testKey,
             "Accept": "text/plain"
         };
         // Fetch the file content from Alfresco using the nodeId

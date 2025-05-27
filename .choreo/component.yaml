@@ -1,0 +1,5 @@
+schemaVersion: 1.1
+dependencies:
+    connectionReferences:
+    - name: DocumentAPIConn
+      resourceRef: service:/claims/documents/v1/e1ce4/PUBLIC

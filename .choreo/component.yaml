@@ -19,8 +19,8 @@ endpoints:
     networkVisibilities:
       - Project
       - Public
-    schemaFilePath: oas/claim_summary_openapi.yaml    
+    schemaFilePath: oas/claim_summary_openapi.yaml
 dependencies:
     connectionReferences:
-    - name: DocumentAPIConn
-      resourceRef: service:/claims/documents/v1/e1ce4/PUBLIC
+    - name: ContentMgtConn
+      resourceRef: service:/claims/content-management/v1/7e41b/PUBLIC
